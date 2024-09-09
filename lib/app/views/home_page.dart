@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(
-                                      '${companiesList[index].name} foi selecionada.')),
+                                      '${companiesList[index].name} Unit foi selecionada, aguarde a organização dos dados.')),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +77,8 @@ class _HomePageState extends State<HomePage> {
                             );
                           }
 
+                          assetsController.clearExibitionList();
+                          assetsController.filterOff();
                           await Future.delayed(const Duration(seconds: 1));
 
                           Navigator.of(context).pushNamed('/assets');

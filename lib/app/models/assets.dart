@@ -8,24 +8,32 @@ class Assets {
   String? gateWay;
   String? locationId;
   String iconPath;
-  List<Assets>? children;
+  List<Assets> children = [];
 
   Assets(this.id, this.name, this.parentId, this.sensorId, this.sensorType,
       this.status, this.gateWay, this.locationId, this.iconPath);
 
-  Assets.assetParAsset(this.id, this.name, this.parentId)
-      : iconPath = 'assets/asset.png';
+  Assets.asset(
+    this.id,
+    this.name,
+    this.parentId,
+    this.sensorId,
+    this.sensorType,
+    this.status,
+    this.gateWay,
+    this.locationId,
+  ) : iconPath = 'assets/asset.png';
 
-  Assets.assetParLocation(this.id, this.name, this.locationId)
-      : iconPath = 'assets/asset.png';
-
-  Assets.componentUnliked(this.id, this.name, this.sensorId, this.sensorType,
-      this.status, this.gateWay)
-      : iconPath = 'assets/component.png';
-
-  Assets.component(this.id, this.name, this.parentId, this.sensorId,
-      this.sensorType, this.status, this.gateWay, this.locationId)
-      : iconPath = 'assets/component.png';
+  Assets.component(
+    this.id,
+    this.name,
+    this.parentId,
+    this.sensorId,
+    this.sensorType,
+    this.status,
+    this.gateWay,
+    this.locationId,
+  ) : iconPath = 'assets/component.png';
 
   @override
   String toString() {
@@ -33,16 +41,9 @@ class Assets {
   }
 
   factory Assets.fromJson(Map<String, dynamic> json) {
-    if (json['location'] != null && json['sensorId'] == null) {
-      return Assets.assetParLocation(
-          json['id'], json['name'], json['locationId']);
-    }
-    if (json['parentId'] != null && json['sensorId'] == null) {
-      return Assets.assetParAsset(json['id'], json['name'], json['parentId']);
-    }
-    if (json['sensorType'] != null &&
-        (json['location'] != null || json['parentId'] != null)) {
-      return Assets.component(
+    if ((json['location'] != null || json['parentId'] != null) &&
+        json['sensorId'] == null) {
+      return Assets.asset(
         json['id'],
         json['name'],
         json['parentId'],
@@ -53,16 +54,16 @@ class Assets {
         json['locationId'],
       );
     }
-    if (json['sensorType'] != null &&
-        json['location'] == null &&
-        json['parentId'] == null) {
-      return Assets.componentUnliked(
+    if (json['sensorType'] != null) {
+      return Assets.component(
         json['id'],
         json['name'],
+        json['parentId'],
         json['sensorId'],
         json['sensorType'],
         json['status'],
         json['gateWay'],
+        json['locationId'],
       );
     }
     return Assets(
