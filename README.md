@@ -2,6 +2,8 @@
 
 A new Flutter project to solve the TRACTIAN's Challenge.
 
+Explanation video: https://drive.google.com/drive/folders/136nJLDMWZXfSgbiU7FQ52iib-6HuD0EZ?usp=sharing
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
