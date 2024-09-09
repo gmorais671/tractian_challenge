@@ -8,74 +8,160 @@ class DataSortHelper {
 
   DataSortHelper({required this.debug});
 
-  Future<List<Locations>> sortLocations(List<Locations> locationsList) async {
-    List<Locations> sortedLocations = [];
+  List<Assets> sortAssets(List<Assets> assets) {
+    List<Assets> sortedList = [];
+    List<String> auxAssetsIds = [];
+    Map<String, Assets> assetsMap = {for (var asset in assets) asset.id: asset};
 
-    List<Locations> hasNoChildren = [];
-    List<Locations> itsParent = [];
-    List<Locations> auxList = [];
+    Assets? createHierarchy(String parentId) {
+      Assets? parent = assetsMap[parentId];
+      if (parent == null) return null;
 
-    debug ? log('aux list length: ${auxList.length.toString()}') : null;
-    debug ? log('Add locations with parents to another list') : null;
+      //add all children to respective parent.children
+      List<Assets> parentChildren =
+          assets.where((element) => element.parentId == parentId).toList();
+      parent.children = [...parentChildren];
 
-    for (Locations location in locationsList) {
-      int parentIndex =
-          locationsList.indexWhere((item) => item.id == location.parentId);
+      parent.children.sort((a, b) => a.name.compareTo(b.name));
 
-      if (parentIndex > -1) itsParent.add(locationsList[parentIndex]);
+      for (var child in parent.children) {
+        createHierarchy(child.id);
+      }
+
+      debug ? log('Created parent: ${parent.toString()}') : null;
+
+      return parent;
     }
 
-    hasNoChildren = locationsListDifference(locationsList, itsParent);
+    getAllDescendentsId(Assets? asset) {
+      if (asset != null) {
+        auxAssetsIds.add(asset.id);
 
-    debug
-        ? log('has no children list length: ${auxList.length.toString()}')
-        : null;
-    debug
-        ? log('its parent list length: ${itsParent.length.toString()}')
-        : null;
-
-    debug ? log('Associate locations with their parents') : null;
-    for (Locations location in hasNoChildren) {
-      int parentIndex =
-          itsParent.indexWhere((item) => item.id == location.parentId);
-
-      if (parentIndex > -1) {
-        itsParent[parentIndex].locationChild = location;
-        auxList.add(location);
+        for (var child in asset.children) {
+          getAllDescendentsId(child);
+        }
       }
     }
 
-    hasNoChildren = locationsListDifference(hasNoChildren, auxList);
+    for (var asset in assets) {
+      if (asset.parentId == null || asset.parentId!.isEmpty) {
+        Assets? hierarchy = createHierarchy(asset.id.toString());
 
-    debug ? log('has no children list length: ${auxList.toString()}') : null;
-    debug ? log('its parent list length: ${itsParent.toString()}') : null;
+        if (hierarchy != null) {
+          getAllDescendentsId(hierarchy);
 
-    sortedLocations = [...itsParent, ...hasNoChildren];
+          assetsMap.removeWhere((key, value) => auxAssetsIds.contains(key));
 
-    debug ? log('Sorted locations: ${sortedLocations.toString()}') : null;
+          sortedList.add(hierarchy);
+        }
 
-    return sortedLocations;
+        auxAssetsIds.clear();
+      }
+    }
+
+    debug ? log('Rest: ${assetsMap.toString()}') : null;
+
+    return sortedList;
   }
 
-  Future<List<Assets>> sortAssets(List<Assets> assetsList) async {
-    List<Assets> sortedAssets = [];
+  List<Locations> sortLocations(List<Locations> locations) {
+    List<Locations> sortedList = [];
+    List<String> auxLocationsIds = [];
+    Map<String, Locations> assetsMap = {
+      for (var location in locations) location.id: location
+    };
 
-    return sortedAssets;
+    Locations? createHierarchy(String parentId) {
+      Locations? parent = assetsMap[parentId];
+      if (parent == null) return null;
+
+      //add all children to respective parent.children
+      List<Locations> parentChildren =
+          locations.where((element) => element.parentId == parentId).toList();
+      parent.locationChild = parentChildren;
+
+      parent.children.sort((a, b) => a.name.compareTo(b.name));
+
+      for (var child in parent.children) {
+        createHierarchy(child.id);
+      }
+
+      debug ? log('Created parent: ${parent.toString()}') : null;
+
+      return parent;
+    }
+
+    getAllDescendentsId(Locations? location) {
+      if (location != null) {
+        auxLocationsIds.add(location.id);
+
+        for (var child in location.locationChild) {
+          getAllDescendentsId(child);
+        }
+      }
+    }
+
+    for (var location in locations) {
+      if (location.parentId == null || location.parentId!.isEmpty) {
+        Locations? hierarchy = createHierarchy(location.id.toString());
+
+        if (hierarchy != null) {
+          getAllDescendentsId(hierarchy);
+
+          assetsMap.removeWhere((key, value) => auxLocationsIds.contains(key));
+
+          sortedList.add(hierarchy);
+        }
+
+        auxLocationsIds.clear();
+      }
+    }
+
+    debug ? log('Rest: ${assetsMap.toString()}') : null;
+
+    return sortedList;
   }
 
-  List<Locations> locationsListDifference(
-    List<Locations> list1,
-    List<Locations> list2,
-  ) {
-    List<Locations> difference = [];
+  List<dynamic> assignAssetsAndLocations(
+      List<Assets> assets, List<Locations> locations) {
+    List<dynamic> sortedObjects = [];
 
-    Set<Locations> set1 = list1.toSet();
-    Set<Locations> set2 = list2.toSet();
+    Map<String, Locations> locationsMap = {
+      for (var location in locations) location.id: location
+    };
 
-    Set<Locations> result = set1.difference(set2);
+    Locations? assignAssetsToLocation(String parentId) {
+      Locations? parent = locationsMap[parentId];
+      if (parent == null) return null;
 
-    difference = result.toList();
+      //add all children to respective parent.children
+      List<Assets> parentChildren =
+          assets.where((element) => element.locationId == parentId).toList();
+      parent.children = parentChildren;
 
-    return difference;
+      parent.children.sort((a, b) => a.name.compareTo(b.name));
+
+      for (var child in parent.children) {
+        assets.removeWhere((element) => element.id == child.id);
+      }
+
+      debug ? log('Asset -> Location: ${parent.toString()}') : null;
+
+      return parent;
+    }
+
+    locationsMap.forEach((key, value) {
+      var aux = assignAssetsToLocation(value.id);
+      if (aux != null) value = aux;
+    });
+
+    sortedObjects.addAll(assets);
+    locationsMap.forEach((key, value) {
+      sortedObjects.add(value);
+    });
+
+    debug ? log('Assets assign: ${sortedObjects.toString()}') : null;
+
+    return sortedObjects;
   }
 }

@@ -4,8 +4,8 @@ class Locations {
   String id;
   String name;
   String? parentId;
-  Locations? locationChild;
-  List<Assets>? children;
+  List<Locations> locationChild = [];
+  List<Assets> children = [];
   String iconPath = 'assets/location.png';
 
   Locations.subLoc(this.id, this.name, this.parentId);
